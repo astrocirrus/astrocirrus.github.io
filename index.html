@@ -141,14 +141,7 @@
     .btn .soon {
       font-weight: 400; font-size: 0.75rem; color: var(--faint);
     }
-    .legend-inline {
-      margin-top: 2.25rem; font-size: 0.85rem; color: var(--muted);
-      display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap;
-    }
-    .legend-inline span { display: inline-flex; align-items: center; gap: 0.45rem; }
-    .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
-    .dot.star { background: var(--star); box-shadow: 0 0 8px var(--star); }
-    .dot.cloud { background: #c9ccd2; box-shadow: 0 0 10px rgba(201,204,210,0.7); }
+ background: #c9ccd2; 
 
     /* ---------- Sections ---------- */
     section.block { padding: 5rem 0; border-bottom: 1px solid var(--line); }
@@ -332,10 +325,6 @@
       </span>
     </div>
 
-    <div class="legend-inline" aria-hidden="true">
-      <span><i class="dot star"></i>Stars rotate with the camera</span>
-      <span><i class="dot cloud"></i>Clouds also drift on their own</span>
-    </div>
   </div>
 </header>
 
@@ -433,9 +422,10 @@
   <div class="wrap">
     <h2>Method overview</h2>
     <figure class="fig">
-      <!-- Pipeline figure: put the image at ./static/images/pipeline.png and uncomment the line below,
-           then delete the .fig-slot div. -->
-      <!-- <img src="./static/images/pipeline.png" alt="Overall pipeline of AstroCirrus"> -->
+      <!-- Upload the pipeline image to static/images/pipeline.png. It appears here automatically;
+           the dashed placeholder shows only while the file is missing. -->
+      <img src="./static/images/pipeline.png" alt="Overall pipeline of AstroCirrus"
+           onload="this.nextElementSibling.remove()" onerror="this.remove()">
       <div class="fig-slot" aria-hidden="true">Pipeline figure</div>
     </figure>
     <div class="prose">
@@ -529,10 +519,10 @@
 (function () {
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* ---------- Hero sky: stars rotate about a pole, clouds drift independently ---------- */
+  /* ---------- Hero sky: stars rotate slowly about a pole ---------- */
   var canvas = document.getElementById('sky');
   var ctx = canvas.getContext('2d');
-  var W = 0, H = 0, dpr = 1, stars = [], clouds = [], pole = { x: 0, y: 0 };
+  var W = 0, H = 0, dpr = 1, stars = [], pole = { x: 0, y: 0 };
   var running = true, angle = 0, last = 0;
 
   function rand(a, b) { return a + Math.random() * (b - a); }
@@ -559,16 +549,6 @@
         cyan: mag > 0.72
       });
     }
-    clouds = [];
-    var nc = W < 700 ? 4 : 7;
-    for (var c = 0; c < nc; c++) {
-      var puffs = [];
-      var cw = rand(W * 0.18, W * 0.38);
-      for (var p = 0; p < 9; p++) {
-        puffs.push({ dx: rand(-cw / 2, cw / 2), dy: rand(-cw * 0.12, cw * 0.12), rad: rand(cw * 0.12, cw * 0.3), a: rand(0.05, 0.12) });
-      }
-      clouds.push({ x: rand(-W * 0.2, W * 1.1), y: rand(H * 0.05, H * 0.95), w: cw, puffs: puffs, v: rand(6, 14) });
-    }
   }
 
   function draw(t) {
@@ -590,23 +570,6 @@
       ctx.beginPath(); ctx.arc(x, y, s.size, 0, Math.PI * 2); ctx.fill();
     }
     ctx.globalAlpha = 1;
-
-    for (var c = 0; c < clouds.length; c++) {
-      var cl = clouds[c];
-      if (!reduceMotion) {
-        cl.x += cl.v * dt;
-        if (cl.x - cl.w > W) { cl.x = -cl.w; cl.y = rand(H * 0.05, H * 0.95); }
-      }
-      for (var p = 0; p < cl.puffs.length; p++) {
-        var pf = cl.puffs[p];
-        var px = cl.x + pf.dx, py = cl.y + pf.dy;
-        var g = ctx.createRadialGradient(px, py, 0, px, py, pf.rad);
-        g.addColorStop(0, 'rgba(190,196,206,' + pf.a + ')');
-        g.addColorStop(1, 'rgba(190,196,206,0)');
-        ctx.fillStyle = g;
-        ctx.beginPath(); ctx.arc(px, py, pf.rad, 0, Math.PI * 2); ctx.fill();
-      }
-    }
 
     if (running && !reduceMotion) requestAnimationFrame(draw);
   }
