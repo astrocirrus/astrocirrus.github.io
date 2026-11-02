@@ -143,7 +143,6 @@
     .btn .soon {
       font-weight: 400; font-size: 0.75rem; color: var(--faint);
     }
- background: #c9ccd2; 
 
     /* ---------- Sections ---------- */
     section.block { padding: 5rem 0; border-bottom: 1px solid var(--line); }
@@ -303,8 +302,8 @@
     <a href="#abstract">Abstract</a>
     <a href="#video">Video</a>
     <a href="#contributions">Contributions</a>
-    <a href="#method">Method</a>
     <a href="#demo">Illustration</a>
+    <a href="#method">Method</a>
     <a href="#results">Results</a>
   </div>
 </nav>
@@ -420,40 +419,15 @@
   </div>
 </section>
 
-<!-- ===================== Method ===================== -->
-<section class="block" id="method">
-  <div class="wrap">
-    <h2>Method overview</h2>
-    <figure class="fig">
-      <!-- Pipeline image: ./pipeline.png (repo root). It appears here automatically;
-           the dashed placeholder shows only while the file is missing. -->
-      <img src="./pipeline.png" alt="Overall pipeline of AstroCirrus"
-           onload="this.nextElementSibling.remove()" onerror="this.remove()">
-      <div class="fig-slot" aria-hidden="true">Pipeline figure</div>
-    </figure>
-    <div class="prose">
-      <p>
-        The star module detects star centroids and estimates frame-to-frame rotation through geometric voting,
-        while the cloud module tracks cloud features and maintains a temporal prior of their intrinsic motion.
-        The joint star&ndash;cloud estimator combines star correspondences, cloud flow, and the cloud-motion prior
-        to estimate a 5-DoF relative-motion state consisting of the camera rotation and intrinsic cloud motion.
-        The estimated relative rotation propagates the previous attitude and predicts the visible catalog stars.
-        Finally, catalog re-association followed by Wahba&rsquo;s solution re-anchors the propagated state to the
-        absolute celestial reference when sufficient matches are available.
-      </p>
-    </div>
-  </div>
-</section>
-
 <!-- ===================== Interactive demo ===================== -->
 <section class="block" id="demo">
   <style>
     .demo { width: min(980px, calc(100vw - 3rem)); margin: 2rem auto 0; }
-    .demo-views { display: grid; gap: 0.9rem; }
+    .demo-views { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
     .view { position: relative; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #000; }
     .view canvas { display: block; width: 100%; }
     #cam { aspect-ratio: 16 / 9; height: auto; }
-    #plot { height: 190px; }
+    #plot { height: 290px; }
     .view-label {
       position: absolute; top: 10px; left: 12px; z-index: 2;
       font-size: 0.75rem; font-weight: 600; color: var(--muted); pointer-events: none;
@@ -484,23 +458,59 @@
       display: flex; align-items: center; gap: 1.25rem;
       padding: 0.9rem 1.1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
     }
-    .cover-ctl { flex: 1; display: block; cursor: pointer; }
+    .cover-ctl { flex: 1; min-width: 0; }
     .cover-head { display: flex; justify-content: space-between; font-weight: 600; }
     .cover-head output { font-variant-numeric: tabular-nums; }
-    .cover-ctl input[type="range"] {
-      -webkit-appearance: none; appearance: none; width: 100%; height: 6px; margin: 0.75rem 0 0.4rem;
-      border-radius: 999px; background: linear-gradient(to right, #1a1f27, #c7ccd4); outline: none;
+    .slider { position: relative; height: 34px; margin-top: 0.35rem; overflow-x: clip; overflow-y: visible; }
+    .track {
+      position: absolute; left: 11px; right: 11px; top: 14px; height: 6px; border-radius: 999px;
+      background: linear-gradient(to right, #1a1f27, #c7ccd4);
     }
-    .cover-ctl input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+    .zone {
+      position: absolute; top: -4px; bottom: -4px; right: -11px; left: calc(var(--z) * 100%);
+      border-radius: 0 999px 999px 0;
+      background: repeating-linear-gradient(135deg, rgba(255,107,107,0.55) 0 5px, rgba(255,107,107,0.25) 5px 10px);
+      box-shadow: inset 0 0 0 1px rgba(255,107,107,0.8);
+    }
+    .slider input[type="range"] {
+      -webkit-appearance: none; appearance: none; position: absolute; inset: 0; width: 100%; height: 34px;
+      margin: 0; background: transparent; outline: none; cursor: pointer;
+    }
+    .slider input[type="range"]::-webkit-slider-runnable-track { background: transparent; height: 34px; }
+    .slider input[type="range"]::-moz-range-track { background: transparent; }
+    .slider input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 22px; height: 22px; margin-top: 6px; border-radius: 50%;
       background: #fff; border: 3px solid #000; box-shadow: 0 0 0 1px #fff;
     }
-    .cover-ctl input[type="range"]::-moz-range-thumb {
+    .slider input[type="range"]::-moz-range-thumb {
       width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 3px solid #000; box-shadow: 0 0 0 1px #fff;
     }
-    .cover-ctl input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 1px #fff, 0 0 0 5px rgba(127,227,255,0.6); }
-    .cover-ctl input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 1px #fff, 0 0 0 5px rgba(127,227,255,0.6); }
-    .cover-ends { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--faint); }
+    .slider input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 1px #fff, 0 0 0 5px rgba(127,227,255,0.6); }
+    .slider input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 1px #fff, 0 0 0 5px rgba(127,227,255,0.6); }
+    .drag-hint {
+      position: absolute; top: 4px; left: calc(11px + var(--v) * (100% - 22px) + 18px);
+      display: flex; align-items: center; gap: 1px;
+      padding: 2px 9px 2px 8px; border-radius: 999px; background: #fff; color: #000;
+      font-size: 0.75rem; font-weight: 700; pointer-events: none; white-space: nowrap;
+      transition: opacity 0.3s ease;
+    }
+    .drag-hint span:first-child { margin-right: 4px; }
+    .drag-hint .chev { font-size: 1rem; line-height: 1; animation: chev 1.2s infinite; opacity: 0.25; }
+    .drag-hint .chev:nth-child(3) { animation-delay: 0.15s; }
+    .drag-hint .chev:nth-child(4) { animation-delay: 0.3s; }
+    @keyframes chev { 0%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+    .drag-hint.gone { opacity: 0; }
+    .cover-ends { position: relative; display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--faint); min-height: 1.2em; }
+    .zone-label {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: #ff9b9b; font-weight: 600; white-space: nowrap; transition: color 0.2s ease;
+    }
+    .zone-label i {
+      width: 14px; height: 8px; border-radius: 2px; display: inline-block;
+      background: repeating-linear-gradient(135deg, rgba(255,107,107,0.8) 0 3px, rgba(255,107,107,0.3) 3px 6px);
+    }
+    .cover-ctl.in-zone .zone-label { color: #fff; }
+    @media (prefers-reduced-motion: reduce) { .drag-hint .chev { animation: none; opacity: 0.8; } }
     .demo-btn {
       appearance: none; font: inherit; font-weight: 600; font-size: 0.95rem;
       padding: 0.65rem 1.5rem; border-radius: 999px;
@@ -518,16 +528,32 @@
       transition: border-color 0.2s ease;
     }
     .score .who { display: flex; align-items: center; gap: 0.6rem; font-weight: 600; }
-    .score .who i { width: 20px; height: 0; border-top: 2.5px solid; display: inline-block; }
+    .score .who i { flex: none; width: 20px; height: 0; border-top: 2.5px solid; display: inline-block; }
     .score .state { font-size: 0.85rem; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
     .score .state small { display: block; font-weight: 400; color: var(--muted); font-size: 0.78rem; }
     .score.ok .state { color: #b9f5d8; }
     .score.drift .state { color: #ffd59a; }
     .score.lost { border-color: #ff6b6b; }
     .score.lost .state { color: #ffb3b3; }
+    .plot-msg {
+      position: absolute; z-index: 2; top: 30px; left: 50%; width: min(720px, calc(100% - 24px));
+      margin: 0; padding: 0.5rem 0.9rem; border-radius: 10px;
+      background: rgba(12, 15, 20, 0.92); border: 1px solid #2f3540;
+      color: #fff; font-size: 0.92rem; font-weight: 500; line-height: 1.5; text-align: center;
+      opacity: 0; transform: translate(-50%, 8px); pointer-events: none;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .plot-msg.show { opacity: 1; transform: translate(-50%, 0); }
+    @media (prefers-reduced-motion: reduce) { .plot-msg { transition: none; } }
     .demo-note { width: min(980px, calc(100vw - 3rem)); margin: 0.9rem auto 0; font-size: 0.8rem; color: var(--faint); text-align: center; }
     @media (max-width: 640px) {
-      .demo-bar { gap: 0.9rem; }
+      #plot { height: 320px; }
+      .plot-msg { font-size: 0.85rem; }
+      .demo-bar { flex-wrap: wrap; gap: 0.75rem; }
+      .demo-bar .cover-ctl { flex-basis: 100%; }
+      .demo-bar .demo-btn { width: 100%; padding: 0.5rem; }
+      .zone-label { display: block; white-space: normal; text-align: right; }
+      .zone-label i { margin-right: 6px; vertical-align: 0; }
       .scores { grid-template-columns: 1fr; }
       .cam-key { display: none; }
       .cam-status { font-size: 0.75rem; }
@@ -536,12 +562,6 @@
 
   <div class="wrap">
     <h2>Interactive illustration</h2>
-    <div class="prose">
-      <p>
-        Drag the <strong>cloud cover</strong> slider. When clouds hide the stars, star-only tracking loses its
-        attitude, while AstroCirrus keeps tracking with cloud motion until the stars come back.
-      </p>
-    </div>
   </div>
 
   <div class="demo">
@@ -556,23 +576,30 @@
         </div>
       </div>
       <div class="demo-bar">
-        <label class="cover-ctl" for="in-cover">
-          <span class="cover-head"><span>Cloud cover</span><output id="out-cover">35%</output></span>
-          <input type="range" id="in-cover" min="0" max="100" step="1" value="35">
-          <span class="cover-ends" aria-hidden="true"><span>Clear</span><span>Overcast</span></span>
-        </label>
+        <div class="cover-ctl">
+          <div class="cover-head"><label for="in-cover">Cloud cover</label><output id="out-cover">35%</output></div>
+          <div class="slider" style="--v: 0.35; --z: 0.85;">
+            <div class="track" aria-hidden="true"><div class="zone"></div></div>
+            <input type="range" id="in-cover" min="0" max="100" step="1" value="35" aria-describedby="cover-zone-label">
+            <div class="drag-hint" id="drag-hint" aria-hidden="true"><span>Drag</span><span class="chev">›</span><span class="chev">›</span><span class="chev">›</span></div>
+          </div>
+          <div class="cover-ends">
+            <span>Clear</span>
+            <span class="zone-label" id="cover-zone-label"><i></i>Stars hidden, existing methods get lost</span>
+          </div>
+        </div>
         <button type="button" class="demo-btn ghost" id="btn-reset">Reset</button>
       </div>
       <div class="scores" id="scores"></div>
       <div class="view">
         <span class="view-label">Attitude error (schematic)</span>
+        <p class="plot-msg" id="demo-lead" aria-live="polite">When clouds hide the stars, existing methods (stars only) lose their attitude, while AstroCirrus keeps tracking with cloud motion.</p>
         <canvas id="plot" aria-label="Schematic attitude error of star-only tracking and AstroCirrus over time"></canvas>
       </div>
     </div>
   </div>
   <p class="demo-note">
     Illustration only: a simplified re-creation of the idea on a synthetic sky, not the AstroCirrus implementation.
-    For measured performance on real night-sky data, see the Results section.
   </p>
 
   <script>
@@ -582,7 +609,7 @@
     var W = 960, H = 540, F = 884, CX = 480, CY = 270;
     var DT = 0.101;                        // frame interval [s]
     var DEG = Math.PI / 180;
-    var SIG_S = 0.45, SIG_C = 1.0, QC = 0.0093, N0 = 0.3, R_KF = 0.09;
+    var SIG_S = 0.45, SIG_C = 1.0, QC = 0.0093, N0 = 0.3, R_KF = 0.3;
     var COLORS = ['#ff8a8a', '#ffb454', '#7fe3ff'];
     var NAMES = ['Star-only', 'Clouds as fixed background', 'AstroCirrus'];
 
@@ -754,6 +781,11 @@
         bankStart: null, lastAuto: -20,
         cTrue: [0, 0], rAssoc: 0, rateNow: 0, coverNow: 0
       };
+      // warm-up under the starting sky (as after the initial lost-in-space fix), so the cloud-motion
+      // prior already exists if the user immediately drags the slider to overcast
+      var keep = P.cover; P.cover = 0.35;
+      for (var w = 0; w < 25; w++) step();
+      P.cover = keep;
     }
 
     // ---------------- One estimator frame ----------------
@@ -834,7 +866,8 @@
         blocks.push({ p: [u0, v0], rot: [p1s[0] - u0, p1s[1] - v0], cI: cI, sig: sc, J: jac(unproj(u0, v0)) });
         cT[0].push(p1[0] - p1s[0]); cT[1].push(p1[1] - p1s[1]);
       }
-      S.cTrue = [median(cT[0]), median(cT[1])];
+      // intrinsic cloud motion, shared across the image as in the paper's model (Eq. 1)
+      S.cTrue = [Math.cos(WIND_DIR) * P.drift * 0.6, Math.sin(WIND_DIR) * P.drift * 0.6];
       blocks.forEach(function (bk) {
         bk.f = [bk.rot[0] + S.cTrue[0] + 0.5*bk.sig*gauss(), bk.rot[1] + S.cTrue[1] + 0.5*bk.sig*gauss()];
       });
@@ -1014,9 +1047,9 @@
         ctx.strokeStyle = '#ff5fc8'; ctx.fillStyle = '#ff5fc8'; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.8;
         S.blocks.forEach(function (b) {
           if (((b.p[0] - 30) / 60 + (b.p[1] - 30) / 60) % 2) return;
-          var x0 = b.p[0], y0 = b.p[1], x1 = x0 + b.f[0]*3, y1 = y0 + b.f[1]*3;
+          var x0 = b.p[0], y0 = b.p[1], x1 = x0 + b.f[0]*5, y1 = y0 + b.f[1]*5;
           var ang = Math.atan2(y1 - y0, x1 - x0), len = Math.hypot(x1 - x0, y1 - y0);
-          if (len < 6) return;
+          if (len < 5) return;
           ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
           ctx.beginPath(); ctx.moveTo(x1, y1);
           ctx.lineTo(x1 - 7*Math.cos(ang - 0.45), y1 - 7*Math.sin(ang - 0.45));
@@ -1051,7 +1084,8 @@
       var ctx = pctx, w = plotW, h = plotH;
       ctx.setTransform(pdpr, 0, 0, pdpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
-      var L = 30, Rm = 14, T = 34, B = 14;
+      var msgEl = document.getElementById('demo-lead');
+      var L = 30, Rm = 14, B = 14, T = msgEl ? msgEl.offsetTop + msgEl.offsetHeight + 14 : 96;   // room for the message
       var pw = w - L - Rm, ph = h - T - B;
       var tEnd = Math.max(S.t, 20), tStart = tEnd - 20;
       var lo = -2, hi = 2;                                 // log scale, values intentionally not shown
@@ -1080,7 +1114,7 @@
       ctx.beginPath(); ctx.moveTo(L, yl); ctx.lineTo(L + pw, yl); ctx.stroke();
       ctx.setLineDash([]);
       ctx.fillStyle = '#c3c8d0'; ctx.font = '11px ' + font; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-      ctx.fillText('Lost above this line', L + pw - 4, yl - 4);
+      ctx.fillText('Lost once crossed', L + pw - 4, yl - 4);
 
       // lines
       [0, 2].forEach(function (m) {
@@ -1100,7 +1134,7 @@
       var hidden = S.nStars < 3;
       camStatus.textContent = hidden ? 'Stars hidden by clouds' : S.det.length + ' stars visible';
       camStatus.classList.toggle('hidden', hidden);
-      scores.innerHTML = [[0, 'Stars only'], [2, 'AstroCirrus']].map(function (it) {
+      scores.innerHTML = [[0, 'Existing methods (stars only)'], [2, 'AstroCirrus']].map(function (it) {
         // lost: the prediction is outside the catalog association radius, so re-anchoring can no longer recover it
         var e = S.est[it[0]], lost = !!e.lost;
         var cls = lost ? 'lost' : 'ok', word = lost ? 'Lost' : 'Tracking';
@@ -1108,13 +1142,35 @@
           ';border-top-style:' + (it[0] === 0 ? 'dashed' : 'solid') + '"></i>' + it[1] + '</span>' +
           '<span class="state">' + word + '</span></div>';
       }).join('');
+      // reveal the explanation the first time the existing method is lost
+      if (S.est[0].lost && !lead.classList.contains('show')) lead.classList.add('show');
     }
 
     // ---------------- Controls ----------------
     var coverIn = document.getElementById('in-cover'), coverOut = document.getElementById('out-cover');
-    function applyCover() { P.cover = parseInt(coverIn.value, 10) / 100; coverOut.textContent = coverIn.value + '%'; }
-    coverIn.addEventListener('input', applyCover); applyCover();
-    document.getElementById('btn-reset').addEventListener('click', function () { reset(); drawPlot(); updateDom(); });
+    var sliderEl = coverIn.parentNode, ctlEl = sliderEl.parentNode, hint = document.getElementById('drag-hint');
+    var lead = document.getElementById('demo-lead');
+    var ZONE = 0.85;                                 // above this the stars are hidden (star-only gets lost)
+    sliderEl.style.setProperty('--z', ZONE);
+    function applyCover() {
+      P.cover = parseInt(coverIn.value, 10) / 100;
+      coverOut.textContent = coverIn.value + '%';
+      sliderEl.style.setProperty('--v', P.cover);
+      ctlEl.classList.toggle('in-zone', P.cover >= ZONE);
+    }
+    coverIn.addEventListener('input', function () {
+      applyCover();
+      hint.classList.add('gone');
+    });
+    applyCover();
+    // Reset: back to the starting sky and slider position
+    document.getElementById('btn-reset').addEventListener('click', function () {
+      coverIn.value = coverIn.defaultValue;
+      applyCover();
+      hint.classList.remove('gone');
+      lead.classList.remove('show');
+      reset(); drawPlot(); updateDom();
+    });
     var paused = false;
 
     // ---------------- Main loop ----------------
@@ -1144,6 +1200,31 @@
     window.__astroDemo = { get S() { return S; }, P: P, step: step, reset: reset };
   })();
   </script>
+</section>
+
+<!-- ===================== Method ===================== -->
+<section class="block" id="method">
+  <div class="wrap">
+    <h2>Method overview</h2>
+    <figure class="fig">
+      <!-- Pipeline image: ./pipeline.png (repo root). It appears here automatically;
+           the dashed placeholder shows only while the file is missing. -->
+      <img src="./pipeline.png" alt="Overall pipeline of AstroCirrus"
+           onload="this.nextElementSibling.remove()" onerror="this.remove()">
+      <div class="fig-slot" aria-hidden="true">Pipeline figure</div>
+    </figure>
+    <div class="prose">
+      <p>
+        The star module detects star centroids and estimates frame-to-frame rotation through geometric voting,
+        while the cloud module tracks cloud features and maintains a temporal prior of their intrinsic motion.
+        The joint star&ndash;cloud estimator combines star correspondences, cloud flow, and the cloud-motion prior
+        to estimate a 5-DoF relative-motion state consisting of the camera rotation and intrinsic cloud motion.
+        The estimated relative rotation propagates the previous attitude and predicts the visible catalog stars.
+        Finally, catalog re-association followed by Wahba&rsquo;s solution re-anchors the propagated state to the
+        absolute celestial reference when sufficient matches are available.
+      </p>
+    </div>
+  </div>
 </section>
 
 <!-- ===================== Results ===================== -->
